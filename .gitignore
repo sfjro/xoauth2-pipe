@@ -1,0 +1,6 @@
+*~
+*.o
+
+xoauth2-pipe
+xoauth2-cred.h
+xoauth2-client

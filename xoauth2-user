@@ -1,0 +1,6 @@
+# gmali-address ":" refresh-token
+# no space in a line is allowed.
+# only the lines which begins with an alphabet letter are valid.
+
+# sample
+# user@gmail.com:1/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx

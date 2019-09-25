@@ -1,0 +1,5 @@
+# xoauth2-pipe
+# obtain from https://console.developers.google.com
+
+client_id="..."
+client_secret="..."
