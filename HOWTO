@@ -1,0 +1,299 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2019 Junjiro R. Okajima
+
+XOAUTH2-PIPE
+
+HOWTO
+
+Contents
+1 Google API Console
+2 Build and install
+ 2.1 Alternative
+3 Refresh-token per sender address
+4 Unit test
+5 Configure systemd and MTA
+ 5.1 systemd
+ 5.2 Exim
+6 Final test
+----------------------------------------
+
+1 Google API Console
+
+Obtain client-id and client-secret, and store them in xoauth2-cred file
+in the source tree.
+
+ (1) Go to https://console.developers.google.com.
+ (2) Login using any Gmail account.
+ (3) Create a new project called "xoauth2-pipe".
+ (4) Enable "Gmail API".
+ (5) Create credentials.
+
+ Which API are you using?		Gmail API
+ Where will you be calling the API from?		Other UI
+ What data will you be accessing?		User data
+
+ (6) Setup OAuth consent screen.
+
+ Application name		xoauth2-pipe
+
+ (7) Obtain client-id and client-secret.
+ (8) Store them in xoauth2-cred file.
+
+2 Build and install
+
+Some other commands or libraries are necessary such as
+
+ * curl(1) and libcurl(3)
+ * libmodpbase64(3)
+ * stunnel(1)
+
+And simply run these commands.
+
+ ----------------------------------------
+ $ make -j
+ $ make -n install install_user_file
+ $ sudo make install install_user_file
+ ----------------------------------------
+
+Note that even if you install xoauth2-pipe, it doesn't affect your MTA
+and its mail delivery at all since you didn't configure MTA to use
+xoauth2-pipe yet.
+
+2.1 Alternative
+
+There are several customizable make-variables.  If you want, set them
+manually.
+
+ * USER_FILE
+
+ The path of the file containing the user's refresh-token.  The default
+ is /etc/xoauth2-user.  The file should not be world-readable, limited
+ to the super-user and the special group for MTA only (MTA_GROUP, see
+ below).
+
+ * MTA_GROUP
+
+ The group of USER_FILE (above).  The default is Debian-exim (since I am
+ a debian user).  The group should match to your MTA's since USER_FILE
+ is read by MTA as a part of the mail delivery.
+
+Before configuring your MTA, you need a few more steps such as storing
+user's refresh-token.  Obviously you should test xoauth2-pipe locally
+first when it is ready.
+
+3 Refresh-token per sender address
+
+ (1) Run "xoauth2-rtoken <web_browser_command>".
+
+ It will invoke the specified web_browser_command which will lead you to
+ the screen where you should allow xoauth2-pipe to handle the e-mail on
+ Gmail account.
+
+ (2) As a result of allowing, the screen will show you a code called
+ "refresh-token" which looks like "4/rQHMvehpxz9q...".
+ (3) Manually copy/paste the refresh-token to the file USER_FILE
+ (/etc/xoauth2-user by default.  From now on this document calls it
+ USER_FILE since the path may be changed when it was installed).
+
+ The file format is simple, just the account, colon, and the
+ refresh-token in a line.
+
+ ----------------------------------------
+ your-account@gmail.com:4/rQHMvehpxz9q...
+ ----------------------------------------
+
+4 Unit test
+
+Essentially the test is simulating an SMTP session.
+
+ (1) Decide a sender and a recipient.
+ The sender address should be Gmail address.  The recipient address can
+ be anything as long as you can read the delivered mail.  Here I call
+ them $sender and $recipient respectively.
+
+ (2) Run the test script called test.sh in the source tree.
+
+ ----------------------------------------
+ $ sh ./test.sh stdalone $sender $recipient
+ ----------------------------------------
+
+ By default, test.sh acquires a privilege to read USER_FILE which is
+ readable by a superuser and the member of MTA's group only.  If your
+ system is not debian or you have specified the make-variable
+ USER_FILE_GROUP at installing, you need to give an environment variable
+ TEST_USER to the test script in order to read USER_FILE.
+
+ ----------------------------------------
+ $ env TEST_USER=your_MTA_account sh ./test.sh stdalone \
+        $sender $recipient
+ ----------------------------------------
+
+5 Configure systemd and MTA
+
+Here I chose Exim(v4) as MTA since I am a debian user.  I hope it
+doesn't matter and any MTA will work by changing the options slightly.
+
+5.1 systemd
+
+You might know about systemd more than me since I have less experiences
+on it.  The purpose is simple, just to listen(2) on a local port and
+invoke xoauth2-pipe.
+
+First, decide the local port number where listens.  Here I assume it as
+10025.
+
+ (1) Create /etc/systemd/system/gmail-smtp@.service file.
+
+ ----------------------------------------
+ [Unit]
+ Description=smtps for gmail
+
+ [Service]
+ ExecStart=/usr/sbin/xoauth2-pipe.sh smtp
+ StandardInput=socket
+ ----------------------------------------
+
+ (2) Create /etc/systemd/system/gmail-smtp.socket file.
+
+ ----------------------------------------
+ [Unit]
+ Description=smtp socket for gmail smtps
+ Before=gmail-smtp@.service
+
+ [Socket]
+ ListenStream=127.0.0.1:10025
+ Accept=yes
+
+ [Install]
+ WantedBy=sockets.target
+ ----------------------------------------
+
+ (3) Make it start.
+
+ ----------------------------------------
+ $ sudo systemctl enable gmail-smtp.socket
+ $ sudo systemctl start gmail-smtp.socket
+ ----------------------------------------
+
+ (4) Make it sure.
+
+ Use netstat(1) or ss(1) command and see that systemd opens the port
+ 10025.  And run telnet(1) to connect the port.
+
+ ----------------------------------------
+ $ ss -lt | fgrep -w 10025
+ LISTEN 0 128 127.0.0.1:10025 *:*
+
+ $ telnet localhost 10025
+ Trying 127.0.0.1...
+ Connected to localhost.
+ Escape character is '^]'.
+ 220 smtp.gmail.com ESMTP w134... - gsmtp
+ QUIT
+ 221 2.0.0 closing connection w134... - gsmtp
+ Connection closed by foreign host.
+ ----------------------------------------
+
+ Connecting localhost:10025 starts the SMTP session between
+ smtp.gmail.com:smtps and showing "220 smtp.gmail.com ESMTP ..." line
+ means the success.  Type QUIT and end telnet(1) command.
+
+ Any other result means a failure.
+
+5.2 Exim
+
+The purpose is the "mail routing by the sender address".  In other
+words, when the domain part of the sender address is gmail.com, then
+deliver the mail to localhost:10025 which is an entrance to
+xoauth2-pipe.
+
+ (1) Add a router such like this in your Exim configuration file.
+
+ ----------------------------------------
+ # routing by sender
+ gmail:
+ driver = manualroute
+ senders = *@gmail.com
+ domains = ! +local_domains
+ # xoauth2-pipe + stunnel
+ route_list = * localhost::10025
+ self = send
+ transport = remote_smtp
+ debug_print = "R: gmail, from=$h_from, sa=$sender_address"
+ ----------------------------------------
+
+ Be careful to the order of the routers in the configuration file.  If
+ your configuration is not changed from the default setting, I'd suggest
+ you to insert this router just after "hubbed_hosts".
+
+ (2) Load the new configuration.
+
+ ----------------------------------------
+ $ sudo /etc/init.d/exim4 reload
+ ----------------------------------------
+
+ (3) Test the routing.
+
+ ----------------------------------------
+ $ sh ./test.sh exim $sender $recipient
+ + /usr/sbin/exim -odf -v -f $sender $recipient
+ LOG: MAIN
+ <= $sender...  U=$your_name P=local S=299
+ delivering 1iCblJ-00...
+ R: gmail, from= sa=$sender...
+ T: remote_smtp for $recipient...
+ Transport port=25 replaced by host-specific port=10025
+ Connecting to localhost [127.0.0.1]:10025 ... connected
+ SMTP<< 220 smtp.gmail.com ESMTP 207sm3... - gsmtp
+ SMTP>> EHLO $your_domain...
+ SMTP<< 250-smtp.gmail.com at your service, [nnn.nnn....]
+ 250-SIZE 35882577
+ 250-8BITMIME
+ 250-AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH
+ 250-ENHANCEDSTATUSCODES
+ 250-PIPELINING
+ 250-CHUNKING
+ 250 SMTPUTF8
+ SMTP>> MAIL FROM:<$sender> SIZE=1330
+ SMTP>> RCPT TO:<$recipient>
+ SMTP>> DATA
+ SMTP<< 250 2.1.0 OK 207sm3... - gsmtp
+ SMTP<< 250 2.1.5 OK 207sm3... - gsmtp
+ SMTP<< 354 Go ahead 207sm3... - gsmtp
+ SMTP>> writing message and terminating "."
+ SMTP<< 250 2.0.0 OK 156... 207sm3... - gsmtp
+ SMTP>> QUIT
+ SMTP(close)>>
+ LOG: MAIN
+ => $recipient R=gmail T=remote_smtp H=localhost [127.0.0.1] C="250
+ 2.0.0 OK 156... 207sm3... - gsmtp"
+ LOG: MAIN
+ Completed
+ ----------------------------------------
+
+ In the output, you can see these facts.
+
+ * The selected router is "gmail" which you added just now.
+ * The selected transport is "remote_smtp" and it connects to
+   localhost:10025.
+ * The first output in the SMTP session is a banner from Gmail.
+ * There is no AUTH command (but it is issued internally).
+
+ Needless to say, you should check all headers in the received test mail
+ thoroughly.
+
+ If you still allow "Less secure app access" on your Gmail account, then
+ disallow it and test again.  Switching $sender and $recipient may be a
+ good test.
+
+6 Final test
+
+By the previous tests, I believe you are already confident that the mail
+delivery is safe and sure.  Let's try the final test which uses the very
+basic ordinary mail(1) command.
+
+ (1) Disallow "Less secure app access" on your Gmail account.
+ (2) Run "sh ./test.sh mail $sender $recipient".
+ (3) Check all headers in the received mail.
+
+Congratulations! You won!!

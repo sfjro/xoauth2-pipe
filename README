@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2019 Junjiro R. Okajima
+
+XOAUTH2-PIPE
+
+README
+
+What is this?
+
+This tool xoauth2-pipe is a small independent tool to insert "AUTH
+XOAUTH2" command into a normal SMTP session.
+
+For configuring and installing, refer to HOWTO file.
+
+Its repository is https://github.com/sfjro/xoauth2-pipe.git, and the
+author is J. R. Okajima (hooanon05g AT gmail DOT com).
+
+How does it work?
+
+ * behaves like a pipe or a hook.  MTA delivers a mail to
+   localhost:10025 (for instance), and xoauth2-pipe is listening on that
+   port.
+ * accepting, xoauth2-pipe connects to smtp.gmail.com:smtps (for
+   instance) via stunnel(1) so that the tool can relay the SMTP session
+   from MTA to Gmail.
+ * the tool handles MAIL FROM command only.
+   - obtain the sender's refresh-token from an external file.
+   - obtain an access-token from accounts.google.com using the
+     refresh-token, client-id and client-secret.  client-id and
+     client-secret are pre-obtained from Google API Console.
+   - issue AUTH XOAUTH2 command using the access-token and the sender
+     address.
+   - finally issue the original MAIL FROM command.
+   - all other SMTP commands and replies in the session are not handled
+     and the tool just read/write between MTA and smtp.gmail.com
+     transparently.
+   - unnecessary to allow "Less secure app access" for the sender Gmail
+     account.
+
+Background or Motivation
+
+In these days, the situation such like this is very common.
+
+ * SMTP port (25) on the internet is blocked by ISP.
+ * An individual has several user accounts including Gmail.  Depending
+   on the purpose, he wants to use the different sender address from
+   time to time.
+ * Local ISP accepts any sender address.  It is ok.  But some recipient
+   domains judge the mail as a bad thing and drop to the trash bin or
+   even discard silently.  It seems due to the sender address is
+   different from the ISP's domain.  Other than From: header and the
+   envelope-from, Return-Path: and Sender: headers may affect their
+   rules to bounce or discard (SPF/DKIM too, maybe).
+
+Configuring MTA as "mail routing by the sender address" would solve the
+most of the problem, but not good for Gmail account.  I used to allow
+"Less secure app access" for my gmail account, in order to use the Gmail
+address as the sender.  But Gmail warns me often saying "your setting is
+risky" or something.  That is annoying.  Implementing xoauth2-pipe and
+disallowing "Less secure app access" solves the last problem.
+
+I hope you could enjoy this and make some comments to improve it!
