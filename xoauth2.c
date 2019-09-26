@@ -42,6 +42,10 @@ int xoauth2(char *buf, unsigned int *status)
 		}
 		break;
 
+	case POP3:
+		err = xoauth2_pop3(buf, status);
+		break;
+
 	default:
 		assert(0);
 		err = EXIT_FAILURE;

@@ -8,7 +8,7 @@ README
 What is this?
 
 This tool xoauth2-pipe is a small independent tool to insert "AUTH
-XOAUTH2" command into a normal SMTP session.
+XOAUTH2" command into a normal SMTP session.  It also supports POP3.
 
 For configuring and installing, refer to HOWTO file.
 

@@ -13,6 +13,8 @@ cmd="/usr/bin/stunnel3 -c -f -P '' -D 3 -r"
 case "$proto" in
 smtp)
 	cmd="$cmd smtp.gmail.com:smtps";;
+pop3)
+	cmd="$cmd pop.gmail.com:pop3s";;
 *)
 	echo $0: Unknown protocol "$proto" 1>&2
 	exit 1

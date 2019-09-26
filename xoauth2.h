@@ -10,6 +10,7 @@
 
 #include "debug.h"
 #include "xoauth2-cred.h"
+#include "pop3.h"
 
 /* status */
 #define XOAUTH2_YET	1
@@ -19,6 +20,7 @@
 
 enum proto {
 	SMTP,
+	POP3
 	/* will be added more */
 };
 

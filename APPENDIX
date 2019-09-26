@@ -47,6 +47,9 @@ to support such as POP3 or IMAP, then try these steps.
 
  (2) Create a new source files <protocol>.[ch] where you should
  implement and a few lines to call them in other files.
+
+ The commit to support POP3 in this repository will be a good example.
+
  (3) decide the local port number where systemd listens and invokes
  xoauth2-pipe.
 

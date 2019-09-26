@@ -131,10 +131,13 @@ int main(int argc, char *argv[])
 	proto = argv[1];
 	if (!strcmp(proto, "smtp"))
 		g.proto = SMTP;
+	else if (proto_pop3_test(proto))
+		g.proto = POP3;
 	else {
 		err = EXIT_FAILURE;
 		fprintf(stderr, "%m, %s\n", proto);
-		fprintf(stderr, "Usage: %s smtp cmd\n", argv[0]);
+		fprintf(stderr, "Usage: %s smtp|pop3 cmd\n", argv[0]);
+		proto_pop3();
 		goto out;
 	}
 

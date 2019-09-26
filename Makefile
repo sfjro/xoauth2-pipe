@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2019 Junjiro R. Okajima
 
+SUPPORT_POP3 ?= 1
 USER_FILE ?= /etc/xoauth2-user
 MTA_GROUP ?= Debian-exim
 Debug ?= 0
@@ -39,6 +40,9 @@ ${USER_FILE}: /etc/%: %
 ########################################
 
 CPPFLAGS += -D_GNU_SOURCE -DNDEBUG
+ifneq (${SUPPORT_POP3},0)
+CPPFLAGS += -DSUPPORT_POP3
+endif
 CFLAGS += -O -Wall
 ifneq (${Debug},0)
 CPPFLAGS += -UNDEBUG
@@ -46,6 +50,9 @@ CFLAGS += -O0 -g
 endif
 
 Obj = xoauth2-pipe.o xoauth2.o gmail.o rtoken.o
+ifneq (${SUPPORT_POP3},0)
+Obj += pop3.o
+endif
 DynamicH = xoauth2-cred.h
 
 xoauth2-cred.h: gen_h.sh xoauth2-cred

@@ -77,6 +77,11 @@ manually.
  a debian user).  The group should match to your MTA's since USER_FILE
  is read by MTA as a part of the mail delivery.
 
+ * SUPPORT_POP3
+
+ Decide whether to support POP3 or not.  The default is 1 which means to
+ support.
+
 Before configuring your MTA, you need a few more steps such as storing
 user's refresh-token.  Obviously you should test xoauth2-pipe locally
 first when it is ready.
