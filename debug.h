@@ -6,6 +6,9 @@
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
+#include <sys/types.h>
+#include <unistd.h>
+
 #ifndef NDEBUG
 #define Dpri(fmt, ...)	fprintf(stderr, "[%d]:%s:%u: " fmt, \
 				getpid(), __func__, __LINE__, ##__VA_ARGS__)

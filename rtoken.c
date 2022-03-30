@@ -21,7 +21,7 @@ int refresh_token(char *user, char *rbuf, size_t rsz)
 	size_t len;
 	struct stat st;
 
-	Dpri("user %s", user);
+	Dpri("user %s\n", user);
 	err = -1;
 	fp = fopen(XOAUTH2_USER, "r");
 	if (!fp)
