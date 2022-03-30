@@ -1,67 +1,69 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Copyright (C) 2019 Junjiro R. Okajima
+# Copyright (C) 2019--2022 Junjiro R. Okajima
 
 XOAUTH2-PIPE
 
 Appendix
 
 Contents
-A Add more Gmail accounts
-B Support more protocols
-C MUA setting
+A  Add more Gmail accounts
+B  Support more protocols
+C  MUA setting
 ----------------------------------------
 
 A Add more Gmail accounts
 
 If you have multiple Gmail accounts or there is another user who has a
-Gmail account on your system, then you may want to make more users able
-to relay to Gmail directly.
+Gmail account on your system, then you may want to make more users
+able to relay to Gmail directly.
 It is easy, just add his account and refresh-token into USER_FILE.
 
- * Run "xoauth2-rtoken <web_browser_command>".
+ *  Run "xoauth2-rtoken <web_browser_command>".
 
- In the web browser, login using another Gmail account and allow
- xoauth2-pipe to work on the e-mail on that Gmail account.  The owner of
- Gmail account should do this.
+  In the web browser, login using another Gmail account and allow
+  xoauth2-pipe to work on the e-mail on that Gmail account.  The owner
+  of Gmail account should do this.
 
- * As a result of allowing, the screen will show you another
-   refresh-token.
- * Manually copy/paste the refresh-token to the file USER_FILE.  Or ask
-   your system administrator to do so.  Note that the refresh-token
-   should be kept in private.  The file USER_FILE is not world-readble.
+ *  As a result of allowing, the screen will show you another
+    refresh-token.
+ *  Manually copy/paste the refresh-token to the file USER_FILE.  Or
+    ask your system administrator to do so.  Note that the
+    refresh-token should be kept in private.  The file USER_FILE is
+    not world-readable.
 
- ----------------------------------------
- another-account@gmail.com:<another refresh-token>
- ----------------------------------------
+  ----------------------------------------
+  another-account@gmail.com:<another refresh-token>
+  ----------------------------------------
 
 B Support more protocols
 
 Currently xoauth2-pipe supports SMTP only.  If you want more protocols
 to support such as POP3 or IMAP, then try these steps.
 
- (1) Make it clear when and how AUTH command should be issued in the
+ (1)  Make it clear when and how AUTH command should be issued in the
  session/conversation.
 
- For example, in SMTP session, xoauth2-pipe intercepts MAIL FROM command
- and inserts AUTH XOAUTH2 command.
+  For example, in SMTP session, xoauth2-pipe intercepts MAIL FROM
+  command and inserts AUTH XOAUTH2 command.
 
- (2) Create a new source files <protocol>.[ch] where you should
+ (2)  Create a new source files <protocol>.[ch] where you should
  implement and a few lines to call them in other files.
 
- The commit to support POP3 in this repository will be a good example.
+  The commit to support POP3 in this repository will be a good
+  example.
 
- (3) decide the local port number where systemd listens and invokes
+ (3)  decide the local port number where systemd listens and invokes
  xoauth2-pipe.
 
 And last but not least, test, Test, TEST.
 
 C MUA setting
 
-Some MUAs may require another setting to completing the "mail routing by
-the sender address".  For example, MH/nmh (yes I'm old fashioned) has
-three delivery methods in their configuration and users choose one of
-them.  The value sendmail/pipe doesn't speak SMTP but sends the mail
-directly to MTA via pipe.  Because the correct sender address is
-essential for the "mail routing by the sender address", MUA should speak
-SMTP.  So MH/nmh users will need to set smtp or sendmail/smtp to mts
-setting in order to cooperate with xoauth2-pipe.
+Some MUAs may require another setting to completing the "mail routing
+by the sender address".  For example, MH/nmh (yes I'm old fashioned)
+has three delivery methods in their configuration and users choose one
+of them.  The value sendmail/pipe doesn't speak SMTP but sends the
+mail directly to MTA via pipe.  Because the correct sender address is
+essential for the "mail routing by the sender address", MUA should
+speak SMTP.  So MH/nmh users will need to set smtp or sendmail/smtp to
+mts setting in order to cooperate with xoauth2-pipe.
