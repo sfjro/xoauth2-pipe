@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 /*
- * Copyright (C) 2019 Junjiro R. Okajima
+ * Copyright (C) 2019-2022 Junjiro R. Okajima
  */
 
 #include <sys/stat.h>
