@@ -84,6 +84,7 @@ static int xoauth2_atoken(char *access_token, size_t sz, char *refresh_token)
 		Dpri("buffer is too small (%lu < %d)\n", sizeof(a), n);
 		goto out_curl_easy;
 	}
+	/* Dpri("a %s\n", a); */
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, &a);
 
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cb_write);
@@ -111,7 +112,8 @@ static int xoauth2_atoken(char *access_token, size_t sz, char *refresh_token)
 	reply.p = strstr(reply.o, "access_token");
 	if (!reply.p) {
 		err = -1;
-		Dpri("there is no access_token.\n%s\n", reply.o);
+		Dpri("there is no access_token.\n%.*s\n",
+		     (int)(sizeof(a) - reply.rest), reply.o);
 		goto out_curl;
 	}
 	reply.p = strchr(reply.p, ':');
@@ -120,7 +122,7 @@ static int xoauth2_atoken(char *access_token, size_t sz, char *refresh_token)
 	q = strchr(access_token, '"');
 	if (q - access_token < sz) {
 		*q = '\0';
-		Dpri("%s", a);
+		Dpri("%.*s\n", (int)(sizeof(a) - reply.rest), a);
 	} else {
 		err = -1;
 		Dpri("need more space +%zu\n", q - access_token - sz);
