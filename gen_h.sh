@@ -7,8 +7,8 @@ set -eu
 
 . ./$1
 cat << EOF
-#ifndef __GMAIL_CRED_H__
-#define __GMAIL_CRED_H__
+#ifndef __GMAIL_CLIENT_H__
+#define __GMAIL_CLIENT_H__
 
 #define CLIENT_ID	"$client_id"
 #define CLIENT_SECRET	"$client_secret"

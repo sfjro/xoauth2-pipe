@@ -9,10 +9,10 @@
 #include <unistd.h>
 #include <curl/curl.h>
 
-#include "xoauth2-cred.h"
+#include "xoauth2-client.h"
 #include "xoauth2.h"
 
-#define REQ_URL		"https://accounts.google.com/o/oauth2/token"
+#define REQ_URL		"https://oauth2.googleapis.com/token"
 #define GRANT_TYPE	"refresh_token"
 
 struct gmail_atoken {

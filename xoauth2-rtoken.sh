@@ -27,16 +27,31 @@ abort could not found $browser
 
 . /etc/xoauth2-client
 
-curl -D $tmp \
-	--data-urlencode client_id=$client_id \
-	--data-urlencode redirect_uri=urn:ietf:wg:oauth:2.0:oob \
-	--data-urlencode response_type=code \
-	--data-urlencode scope=https://mail.google.com/ \
-	https://accounts.google.com/o/oauth2/auth
-grep '^location:' $tmp |
-cut -f2- -d' ' |
-xargs -L1 -n1 $browser &
+url='https://accounts.google.com/o/oauth2/auth'
+url="$url?client_id=$client_id"
+url="$url&redirect_uri=urn:ietf:wg:oauth:2.0:oob"
+url="$url&response_type=code"
+url="$url&scope=https://mail.google.com/"
+$browser $url &
 sleep 1
+
+cat << EOF
+In your browser, allow xoauth2-pipe to access your account, and get
+Authorisation code.
+Now Copy/paste it and hit enter key.
+EOF
+read authcode
+
+curl -s \
+	--data-urlencode client_id=$client_id \
+	--data-urlencode client_secret=$client_secret \
+	--data-urlencode code=$authcode \
+	--data-urlencode redirect_uri=urn:ietf:wg:oauth:2.0:oob \
+	--data-urlencode grant_type=authorization_code \
+	https://accounts.google.com/o/oauth2/token \
+|
+tee $tmp|
+fgrep -w refresh_token || :
 
 cat << EOF
 In the browser's screen, allow "xoauth2-pipe" to use Gmail API for your

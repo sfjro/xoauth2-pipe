@@ -7,7 +7,7 @@ USER_FILE ?= /etc/xoauth2-user
 MTA_GROUP ?= Debian-exim
 Debug ?= 0
 
-Tgt = xoauth2-pipe xoauth2-client
+Tgt = xoauth2-pipe
 Etc = $(addprefix /etc/,xoauth2-client)
 Cmd = /usr/sbin/xoauth2-pipe.sh /usr/bin/xoauth2-rtoken
 Bin = /usr/sbin/xoauth2-pipe
@@ -32,7 +32,7 @@ ${Bin}: /usr/sbin/%: %
 /usr/bin/xoauth2-rtoken: /usr/bin/%: %.sh
 	${InstallCmd} $< $@
 ${Etc}: /etc/%: %
-	${InstallCmd} -m 644 $< $@
+	${InstallCmd} -g ${MTA_GROUP} -m 640 $< $@
 install_user_file: ${USER_FILE}
 ${USER_FILE}: /etc/%: %
 	${InstallCmd} -b -g ${MTA_GROUP} -m 640 $< $@
@@ -53,13 +53,10 @@ Obj = xoauth2-pipe.o xoauth2.o gmail.o rtoken.o
 ifneq (${SUPPORT_POP3},0)
 Obj += pop3.o
 endif
-DynamicH = xoauth2-cred.h
+DynamicH = xoauth2-client.h
 
-xoauth2-cred.h: gen_h.sh xoauth2-cred
+xoauth2-client.h: gen_h.sh xoauth2-client
 	sh $^ ${USER_FILE} > $@
-
-xoauth2-client: xoauth2-cred
-	fgrep -vw client_secret $< > $@
 
 ${Obj}: %.o: %.c $(filter-out ${DynamicH}, *.h) ${DynamicH}
 

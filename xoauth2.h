@@ -9,7 +9,7 @@
 #include <stddef.h>
 
 #include "debug.h"
-#include "xoauth2-cred.h"
+#include "xoauth2-client.h"
 #include "pop3.h"
 
 /* status */
