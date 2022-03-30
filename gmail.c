@@ -12,7 +12,7 @@
 #include "xoauth2-client.h"
 #include "xoauth2.h"
 
-#define REQ_URL		"https://oauth2.googleapis.com/token"
+#define REQ_URL		"https://accounts.google.com/o/oauth2/token"
 #define GRANT_TYPE	"refresh_token"
 
 struct gmail_atoken {
