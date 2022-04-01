@@ -20,6 +20,7 @@ pop3)
 	exit 1
 esac
 
+umask 077
 #id > $tmp.id
 #tee $tmp.input |
 #strace -f -o $tmp.s
