@@ -21,9 +21,11 @@ pop3)
 esac
 
 umask 077
-#id > $tmp.id
-#tee $tmp.input |
+set +e
 #strace -f -o $tmp.s
 /usr/sbin/xoauth2-pipe $proto $cmd 2> $tmp
+ret=$?
+set -e
 test -s $tmp ||
 rm -f $tmp
+exit $ret
